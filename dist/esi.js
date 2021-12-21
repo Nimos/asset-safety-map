@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14,27 +5,40 @@ define(["require", "exports"], function (require, exports) {
     const ESI_BASE = "https://esi.evetech.net";
     const ESI_SOLAR_SYSTEMS_LIST = "/v1/universe/systems/";
     const ESI_SOLAR_SYSTEMS_INFO = "/v4/universe/systems/";
-    function getSolarSystemList() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let systems = yield esiRequest(ESI_SOLAR_SYSTEMS_LIST);
-            return systems;
-        });
+    const SECURITY_COLORS = [
+        "#2FEFEF",
+        "#48F0C0",
+        "#00EF47",
+        "#00F000",
+        "#8FEF2F",
+        "#EFEF00",
+        "#D77700",
+        "#F06000",
+        "#F04800",
+        "#D73000",
+        "#F00000"
+    ].reverse();
+    async function getSolarSystemList() {
+        let systems = await esiRequest(ESI_SOLAR_SYSTEMS_LIST);
+        return systems;
     }
     exports.getSolarSystemList = getSolarSystemList;
-    function getSolarSystemInfo(solarSystemId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const url = ESI_SOLAR_SYSTEMS_INFO + solarSystemId;
-            console.log(url);
-            let systemInfo = yield esiRequest(url);
-            return systemInfo;
-        });
+    async function getSolarSystemInfo(solarSystemId) {
+        const url = ESI_SOLAR_SYSTEMS_INFO + solarSystemId;
+        console.log(url);
+        let systemInfo = await esiRequest(url);
+        return systemInfo;
     }
     exports.getSolarSystemInfo = getSolarSystemInfo;
-    function esiRequest(route) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let response = yield fetch(ESI_BASE + route);
-            let result = yield response.json();
-            return result;
-        });
+    function getSecurityStatusColor(security) {
+        security = Math.max(0, security);
+        security = Math.floor(security * 10);
+        return SECURITY_COLORS[security];
+    }
+    exports.getSecurityStatusColor = getSecurityStatusColor;
+    async function esiRequest(route) {
+        let response = await fetch(ESI_BASE + route);
+        let result = await response.json();
+        return result;
     }
 });

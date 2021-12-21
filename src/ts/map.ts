@@ -1,4 +1,4 @@
-import { getSolarSystemList, getSolarSystemInfo, SolarSystem } from "./esi";
+import { getSolarSystemList, getSolarSystemInfo, SolarSystem, getSecurityStatusColor } from "./esi";
 
 const CANVAS_ID = "mapcanvas";
 const OVERLAY_ID = "mapoverlay";
@@ -10,6 +10,8 @@ const MIN_X = -508743946216136960;
 const MIN_Y = -508743946216136960;
 const MAX_X = 472860102256056640;
 const MAX_Y = 472860102256056640;
+
+const MAX_CONCURRENT_REQUESTS = 50;
 
 async function init(): Promise<void> {
     const canvas: HTMLCanvasElement | null = <HTMLCanvasElement | null>document.getElementById(CANVAS_ID);
@@ -32,15 +34,25 @@ async function init(): Promise<void> {
     overlay.innerText = `0 / ${solarSystemList.length}`;
     let count: number = 0;
 
-    console.log(solarSystemList)
+    let requests = 0
+
     for (let solarSystemId of solarSystemList) {
         
-        let info = await getSolarSystemInfo(solarSystemId);
-        solarSystems.push(info);
+        while (requests >= MAX_CONCURRENT_REQUESTS) {
+            await _sleep(10);
+        }
 
-        drawSolarSystem(info);
-        
-        overlay.innerText = `${++count} / ${solarSystemList.length}`;
+        requests += 1;
+
+        getSolarSystemInfo(solarSystemId).then(info => {
+            solarSystems.push(info);
+
+            drawSolarSystem(info);
+            
+            overlay.innerText = `${++count} / ${solarSystemList.length}`;
+        }).finally(() => {
+            requests -= 1;
+        })
     }
 
     function drawSolarSystem(solarSystem: SolarSystem) {
@@ -49,13 +61,7 @@ async function init(): Promise<void> {
 
         let coordinates = convertCoordinate(solarSystem.position.x, solarSystem.position.z);
 
-        if (solarSystem.security_status < 0) {
-            ctx.fillStyle = "#FF0000";
-        } else if (solarSystem.security_status < 0.5) {
-            ctx.fillStyle = "#FF7700";
-        } else {
-            ctx.fillStyle = "#00FF00";
-        }
+        ctx.fillStyle = getSecurityStatusColor(solarSystem.security_status);
 
         ctx.fillRect(coordinates[0] - 1, coordinates[1] - 1, 2, 2)
     }
@@ -73,6 +79,12 @@ async function init(): Promise<void> {
         return [x, y];
       }    
 
+}
+
+async function _sleep(miliseconds: number) {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, miliseconds)
+    })
 }
 
 
