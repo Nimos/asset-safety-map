@@ -2,6 +2,7 @@ const CACHE_PREFIX = "esi-";
 const ESI_BASE = "https://esi.evetech.net";
 const ESI_SOLAR_SYSTEMS_LIST = "/v1/universe/systems/";
 const ESI_SOLAR_SYSTEMS_INFO = "/v4/universe/systems/";
+const ESI_CONSTELLATIONS_INFO = "/v1/universe/constellations/";
 
 
 const SECURITY_COLORS = [
@@ -25,8 +26,15 @@ export interface SolarSystem {
         x: number,
         y: number,
         z: number
-    },
-    security_status: number
+    };
+    security_status: number;
+    stations: number[];
+    stargates: number[];
+    constellation_id: number;
+}
+
+export interface Constellation {
+    region_id: number;
 }
 
 export async function getSolarSystemList(): Promise<number[]> {
@@ -36,10 +44,16 @@ export async function getSolarSystemList(): Promise<number[]> {
 
 export async function getSolarSystemInfo(solarSystemId: number): Promise<SolarSystem> {
     const url = ESI_SOLAR_SYSTEMS_INFO + solarSystemId;
-    console.log(url);
     let systemInfo = await esiRequest(url);
 
     return systemInfo;
+}
+
+export async function getConstellation(solarSystem: SolarSystem): Promise<Constellation> {
+    const url = ESI_CONSTELLATIONS_INFO + solarSystem.constellation_id;
+    let constellation = await esiRequest(url)
+    
+    return constellation;
 }
 
 export function getSecurityStatusColor(security: number) {
